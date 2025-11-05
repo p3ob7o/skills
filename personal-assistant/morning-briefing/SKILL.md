@@ -1,6 +1,6 @@
 ---
 name: morning-briefing
-description: This skill should be used every morning at 9:00 CET (7 days/week) to prepare the user's day through intelligent triage and prioritization of calendar events, Linear issues, emails, Slack mentions, and pending action items. The skill implements a three-layer prioritization framework (Eisenhower Matrix → Now/Next/Later → Deep/Shallow work) and produces a comprehensive briefing written to the daily note.
+description: This skill should be used every morning at 9:00 local time (7 days/week) to prepare the user's day through intelligent triage and prioritization of calendar events, Linear issues, emails, Slack mentions, and pending action items. The skill implements a three-layer prioritization framework (Eisenhower Matrix → Now/Next/Later → Deep/Shallow work) and produces a comprehensive briefing written to the daily note.
 ---
 
 # Morning Briefing
@@ -12,7 +12,7 @@ This skill prepares the user for their day by collecting data from multiple sour
 ## When to Use This Skill
 
 Trigger this skill:
-- Daily at 9:00 CET via cron reminder (user initiates when ready)
+- Daily at 9:00 local time via cron reminder (user initiates when ready)
 - When the user explicitly requests a morning briefing or day preparation
 - When the user needs to re-prioritize their day
 
@@ -107,21 +107,21 @@ Transform Layer 1 classifications into temporal buckets:
 
 For "Now" (Today) items, categorize by work type:
 
-**Deep Work (before 13:00 CET):**
+**Deep Work (before 13:00):**
 - Complex problem-solving
 - Strategic planning
 - Creative work
 - Focused coding or writing
 - Important decisions
 
-**Shallow Work (after 14:00 CET):**
+**Shallow Work (after 14:00):**
 - Email responses
 - Administrative tasks
 - Routine updates
 - Quick meetings
 - Status checks
 
-Note: 13:00-14:00 is lunch break
+Note: 13:00-14:00 is lunch break (all times in local timezone)
 
 ### Phase 4: Output Generation
 
@@ -285,6 +285,6 @@ If any integration fails:
 
 - This skill writes to the user's Obsidian vault
 - All file paths use YYYY/MM/YYYY-MM-DD.md format
-- Times are in CET timezone
+- Times are in the user's local timezone (adjusts automatically when traveling)
 - The skill is read-heavy (fetches data) and write-light (one daily note)
 - State files in `/meta/` provide continuity across days
