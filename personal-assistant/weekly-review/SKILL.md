@@ -50,11 +50,12 @@ Collect and synthesize data from the entire week:
    - Use MCP Linear tools
 
 4. **Calendar Summary**
-   - Aggregate week's meetings from daily notes
+   - Aggregate week's meetings from daily notes (preferred - already collected)
+   - Alternative: Can fetch directly using calendar_fetch.py for full week
    - Calculate total meeting hours
    - Categorize: 1:1s, team meetings, cross-functional, external
    - Identify heaviest meeting days
-   - Use data from daily notes (already fetched)
+   - Note: Daily notes should already have this data from morning/evening reflections
 
 5. **Conversations**
    - List week's meeting summaries from `/conversations/`

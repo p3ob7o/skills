@@ -23,9 +23,10 @@ Trigger this skill:
 Collect data about what actually happened today:
 
 1. **Google Calendar**
-   - Fetch today's events (actual events that occurred)
-   - Include event titles, times, attendees, outcomes
-   - Use MCP Google Calendar tools
+   - Fetch today's events using direct Calendar API script
+   - Script location: `/Users/paolo/.claude/skills/personal-assistant/scripts/calendar_fetch.py`
+   - Include event titles, times, attendees, conference links
+   - Returns: summary, start, end, location, attendees, organizer
 
 2. **Today's Daily Note**
    - Read the morning briefing section
@@ -254,9 +255,11 @@ Create or update `/meta/action-items.json` with items for tomorrow's briefing:
 
 ### Calendar Integration
 ```
-Use MCP Google Calendar tools:
-- google_calendar_find_events with start_time=today_00:00 and end_time=today_23:59
-- Fetch actual events that occurred (compare to morning briefing)
+Use direct Calendar API script:
+- Script: /Users/paolo/.claude/skills/personal-assistant/scripts/calendar_fetch.py
+- Fetch today's events that occurred: ./calendar_fetch.py "YYYY-MM-DDT00:00:00+TZ" "YYYY-MM-DDT23:59:59+TZ"
+- Compare to morning briefing to see planned vs actual
+- See morning-briefing/SKILL.md for full integration example
 ```
 
 ### Slack Integration

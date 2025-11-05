@@ -1,13 +1,14 @@
-# Gmail API Direct Access Setup
+# Gmail & Calendar API Direct Access Setup
 
-This guide explains how to set up direct Gmail API access to retrieve emails without body content, avoiding the Zapier MCP token limits.
+This guide explains how to set up direct Gmail and Calendar API access to retrieve data without unnecessary content, avoiding the Zapier MCP token limits.
 
 ## Why This Approach?
 
 The Zapier Gmail MCP tool always returns full email bodies, causing token limit issues with large inboxes. This direct API approach:
-- Fetches only metadata (subject, from, to, date, labels)
-- No email body content = dramatically reduced token usage
-- Can handle hundreds of emails within token limits
+- **Gmail**: Fetches only metadata (subject, from, to, date, labels) without body content
+- **Calendar**: Fetches only essential event data (title, time, attendees) with full control
+- Dramatically reduced token usage
+- Can handle hundreds of items within token limits
 - Full control over filtering and pagination
 
 ## Setup Steps
@@ -24,11 +25,11 @@ pip3 install --upgrade google-auth-oauthlib google-auth-httplib2 google-api-pyth
 2. Create a new project (or select existing one)
 3. Name it something like "Personal Assistant Gmail Access"
 
-### 3. Enable Gmail API
+### 3. Enable Gmail API and Calendar API
 
 1. In the Google Cloud Console, go to "APIs & Services" → "Library"
-2. Search for "Gmail API"
-3. Click "Enable"
+2. Search for "Gmail API" and click "Enable"
+3. Search for "Google Calendar API" and click "Enable"
 
 ### 4. Create OAuth 2.0 Credentials
 
@@ -39,7 +40,9 @@ pip3 install --upgrade google-auth-oauthlib google-auth-httplib2 google-api-pyth
    - App name: "Personal Assistant"
    - User support email: Your email
    - Developer contact: Your email
-   - Add scope: `../auth/gmail.readonly`
+   - Add scopes:
+     - `../auth/gmail.readonly`
+     - `../auth/calendar.readonly`
    - Add your email as a test user
 4. Create OAuth client ID:
    - Application type: "Desktop app"
@@ -91,9 +94,27 @@ Subsequent runs will use the saved token.
 /Users/paolo/.claude/skills/personal-assistant/scripts/gmail_fetch.py "in:inbox" 200
 ```
 
-## Output Format
+### Retrieve Calendar Events
 
-The script outputs JSON:
+```bash
+# Get today's events
+/Users/paolo/.claude/skills/personal-assistant/scripts/calendar_fetch.py "2025-11-05T00:00:00+01:00" "2025-11-05T23:59:59+01:00"
+
+# Get tomorrow's events
+/Users/paolo/.claude/skills/personal-assistant/scripts/calendar_fetch.py "2025-11-06T00:00:00+01:00" "2025-11-06T23:59:59+01:00"
+
+# Get events from a specific calendar
+/Users/paolo/.claude/skills/personal-assistant/scripts/calendar_fetch.py "2025-11-05T00:00:00+01:00" "2025-11-05T23:59:59+01:00" "paolo@a8c.com"
+
+# Get more events (default is 50)
+/Users/paolo/.claude/skills/personal-assistant/scripts/calendar_fetch.py "2025-11-05T00:00:00+01:00" "2025-11-05T23:59:59+01:00" "primary" 100
+```
+
+## Output Formats
+
+### Gmail Output
+
+The gmail_fetch.py script outputs JSON:
 
 ```json
 {
@@ -114,6 +135,44 @@ The script outputs JSON:
 }
 ```
 
+### Calendar Output
+
+The calendar_fetch.py script outputs JSON:
+
+```json
+{
+  "count": 5,
+  "start_time": "2025-11-05T00:00:00+01:00",
+  "end_time": "2025-11-05T23:59:59+01:00",
+  "calendar_id": "primary",
+  "events": [
+    {
+      "id": "event_id_here",
+      "summary": "Team Standup",
+      "description": "Daily team sync",
+      "location": "Zoom",
+      "start": "2025-11-05T09:00:00+01:00",
+      "end": "2025-11-05T09:30:00+01:00",
+      "all_day": false,
+      "status": "confirmed",
+      "attendees": [
+        {
+          "email": "colleague@example.com",
+          "name": "Colleague Name",
+          "response_status": "accepted",
+          "organizer": false
+        }
+      ],
+      "attendee_count": 5,
+      "organizer": "paolo@a8c.com",
+      "html_link": "https://calendar.google.com/calendar/event?eid=...",
+      "hangout_link": "https://meet.google.com/...",
+      "conference_data": {}
+    }
+  ]
+}
+```
+
 ## Token Usage Comparison
 
 **Zapier MCP (with body):**
@@ -122,9 +181,9 @@ The script outputs JSON:
 **Direct API (metadata only):**
 - 123 emails = ~3,000-5,000 tokens ✅ (well within limits)
 
-## Integration with Morning Briefing
+## Integration Examples
 
-To use this in the morning briefing skill:
+### Gmail Integration (Morning Briefing)
 
 ```python
 import subprocess
@@ -147,15 +206,56 @@ for email in emails:
     pass
 ```
 
+### Calendar Integration (Morning Briefing)
+
+```python
+import subprocess
+import json
+from datetime import datetime, timedelta
+
+# Get today's date range
+today = datetime.now()
+start_time = today.replace(hour=0, minute=0, second=0).isoformat()
+end_time = today.replace(hour=23, minute=59, second=59).isoformat()
+
+# Fetch today's calendar events
+result = subprocess.run(
+    ['/Users/paolo/.claude/skills/personal-assistant/scripts/calendar_fetch.py',
+     start_time, end_time, 'paolo@a8c.com', '50'],
+    capture_output=True,
+    text=True
+)
+
+data = json.loads(result.stdout)
+events = data['events']
+
+# Process events for the briefing
+for event in events:
+    # Format event for display
+    summary = event['summary']
+    start = event['start']
+    end = event['end']
+    location = event['location']
+    attendees = event['attendees']
+    # Add to briefing...
+```
+
 ## Troubleshooting
 
 ### "credentials_missing" Error
 
 You need to download OAuth credentials from Google Cloud Console and save to `~/.claude/gmail_credentials.json`.
 
-### "invalid_grant" Error
+### "invalid_grant" Error or Missing Calendar Access
 
-Token has expired. Delete `~/.claude/gmail_token.json` and re-authenticate.
+Token has expired or doesn't have calendar scope. This can happen if you set up Gmail first and then added Calendar API later.
+
+**Solution**: Delete `~/.claude/gmail_token.json` and re-authenticate:
+```bash
+rm ~/.claude/gmail_token.json
+# Run either script to re-authenticate with both scopes
+/Users/paolo/.claude/skills/personal-assistant/scripts/gmail_fetch.py "in:inbox" 10
+```
 
 ### Browser Doesn't Open for Auth
 

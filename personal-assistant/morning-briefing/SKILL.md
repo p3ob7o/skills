@@ -23,14 +23,12 @@ Trigger this skill:
 Collect data from all integrated sources:
 
 1. **Google Calendar**
-   - Fetch today's events (all day and time-specific)
-   - Include event titles, times, locations, attendees
-   - Use MCP Google Calendar tools
-   - **IMPORTANT**: Zapier Google Calendar has counter-intuitive parameter naming:
-     - `end_time` = earliest timestamp (start of search window)
-     - `start_time` = latest timestamp (end of search window)
-     - Example: To get events for Nov 5, use `end_time="2025-11-05T00:00:00+01:00"` and `start_time="2025-11-05T23:59:59+01:00"`
-   - Use `calendarid="paolo@a8c.com"` (primary calendar)
+   - Fetch today's events using direct Calendar API script
+   - Script location: `/Users/paolo/.claude/skills/personal-assistant/scripts/calendar_fetch.py`
+   - Include event titles, times, locations, attendees, conference links
+   - Returns: summary, start, end, location, attendees, organizer, html_link, hangout_link
+   - Handles both all-day and time-specific events
+   - Calendar ID: `paolo@a8c.com` (or `primary`)
 
 2. **Linear**
    - Query for active issues with filters:
@@ -229,9 +227,36 @@ Update state files in `/meta/`:
 
 ### Calendar Integration
 ```
-Use MCP Google Calendar tools:
-- google_calendar_find_events with start_time=today_00:00 and end_time=today_23:59
-- Filter for events where user is attendee or organizer
+Use direct Calendar API script (full control over data):
+- Script: /Users/paolo/.claude/skills/personal-assistant/scripts/calendar_fetch.py
+- Fetch today's events: ./calendar_fetch.py "YYYY-MM-DDT00:00:00+TZ" "YYYY-MM-DDT23:59:59+TZ" "paolo@a8c.com"
+
+Example Python integration:
+import subprocess
+import json
+from datetime import datetime
+
+# Get today's date range in ISO format with timezone
+today = datetime.now()
+start_time = today.replace(hour=0, minute=0, second=0).isoformat()
+end_time = today.replace(hour=23, minute=59, second=59).isoformat()
+
+result = subprocess.run(
+    ['/Users/paolo/.claude/skills/personal-assistant/scripts/calendar_fetch.py',
+     start_time, end_time, 'paolo@a8c.com', '50'],
+    capture_output=True,
+    text=True
+)
+data = json.loads(result.stdout)
+events = data['events']
+
+# Each event contains:
+# - id, summary, description, location
+# - start, end (ISO datetime or date for all-day)
+# - all_day (boolean)
+# - attendees (list with email, name, response_status)
+# - organizer, html_link, hangout_link
+# - conference_data (for Zoom/Meet/etc)
 ```
 
 ### Linear Integration
