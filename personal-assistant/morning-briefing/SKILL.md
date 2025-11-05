@@ -40,10 +40,12 @@ Collect data from all integrated sources:
    - Use MCP Linear tools
 
 3. **Gmail**
-   - Fetch starred emails
-   - Fetch all untreated inbox emails
+   - Fetch starred emails using direct Gmail API script
+   - Fetch all untreated inbox emails (metadata only, no body)
+   - Script location: `/Users/paolo/.claude/skills/personal-assistant/scripts/gmail_fetch.py`
+   - Returns: subject, from, to, date, labels, snippet, message_url
+   - Token-efficient: ~8,000 tokens for 139 emails vs ~74,000 with MCP
    - Prepare for inbox-zero triage
-   - Use MCP Gmail tools
 
 4. **Slack**
    - Query mentions from 19:00 yesterday to now
@@ -245,10 +247,33 @@ Use MCP Linear tools:
 
 ### Gmail Integration
 ```
-Use MCP Gmail tools:
-- gmail_find_email with query:"is:starred"
-- gmail_find_email with query:"in:inbox is:unread"
-- Classify each email for triage
+Use direct Gmail API script (avoids token limits):
+- Script: /Users/paolo/.claude/skills/personal-assistant/scripts/gmail_fetch.py
+- Fetch starred: ./gmail_fetch.py "is:starred" 50
+- Fetch inbox unread: ./gmail_fetch.py "in:inbox is:unread" 150
+
+Example Python integration:
+import subprocess
+import json
+
+result = subprocess.run(
+    ['/Users/paolo/.claude/skills/personal-assistant/scripts/gmail_fetch.py', 'in:inbox is:unread', '150'],
+    capture_output=True,
+    text=True
+)
+data = json.loads(result.stdout)
+emails = data['emails']
+
+# Each email contains:
+# - id, thread_id, labels, snippet
+# - from, to, subject, date
+# - message_url (direct link to Gmail)
+
+# Classify each email for triage based on:
+# - Subject line content
+# - Sender (from field)
+# - Labels (UNREAD, IMPORTANT, CATEGORY_*)
+# - Snippet preview
 ```
 
 ### Slack Integration
