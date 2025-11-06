@@ -50,10 +50,11 @@ Collect data about what actually happened today:
    - Use MCP Gmail tools
 
 5. **Linear**
-   - Query issues updated today
+   - Fetch issues updated today using direct Linear API script
+   - Script location: `/Users/paolo/.claude/skills/personal-assistant/scripts/linear_fetch.py`
    - Identify completed vs in-progress items
    - Note blockers or status changes
-   - Use MCP Linear tools
+   - Returns: id, identifier, title, state changes, labels, comments
 
 6. **Conversations**
    - Check `/conversations/` for new meeting summaries added today
@@ -281,10 +282,31 @@ Use MCP Gmail tools:
 
 ### Linear Integration
 ```
-Use MCP Linear tools:
-- Query issues updated today
-- Filter for completed, in-progress, or blocked status changes
-- Include user as assignee, subscriber, or mentioned
+Use direct Linear API script:
+- Script: /Users/paolo/.claude/skills/personal-assistant/scripts/linear_fetch.py
+- Fetch issues updated today: ./linear_fetch.py updated_today 50
+
+Example Python integration:
+import subprocess
+import json
+
+result = subprocess.run(
+    ['/Users/paolo/.claude/skills/personal-assistant/scripts/linear_fetch.py', 'updated_today', '50'],
+    capture_output=True,
+    text=True
+)
+data = json.loads(result.stdout)
+issues = data['issues']
+
+# Group by state for evening reflection
+completed = [i for i in issues if i['state']['type'] == 'completed']
+in_progress = [i for i in issues if i['state']['type'] == 'started']
+blocked = [i for i in issues if 'blocked' in [label['name'].lower() for label in i['labels']]]
+
+# Format for daily note
+for issue in completed:
+    # [LIN-XXX] Issue title
+    pass
 ```
 
 ### Obsidian Integration

@@ -42,12 +42,13 @@ Collect and synthesize data from the entire week:
    - Note: /highlights is READ-ONLY
 
 3. **Linear Sprint Data**
-   - Query completed issues this week
-   - Query in-progress issues
-   - Query blocked issues
+   - Fetch completed issues this week using direct Linear API script
+   - Script location: `/Users/paolo/.claude/skills/personal-assistant/scripts/linear_fetch.py`
+   - Fetch in-progress issues
+   - Identify blocked issues
    - Calculate completion rate
    - Identify patterns (types of work, blockers)
-   - Use MCP Linear tools
+   - Returns: id, identifier, title, state, priority, labels, team, project
 
 4. **Calendar Summary**
    - Aggregate week's meetings from daily notes (preferred - already collected)
@@ -412,12 +413,42 @@ Use MCP Obsidian tools:
 
 ### Linear Integration
 ```
-Use MCP Linear tools:
-- Query issues completed this week (updated_at in week range)
-- Query current in-progress issues
-- Query blocked issues
-- Calculate sprint metrics
-- Include user as assignee, subscriber, or mentioned
+Use direct Linear API script:
+- Script: /Users/paolo/.claude/skills/personal-assistant/scripts/linear_fetch.py
+- Fetch completed this week: ./linear_fetch.py completed_this_week 100
+- Fetch all active issues: ./linear_fetch.py active 100
+
+Example Python integration:
+import subprocess
+import json
+
+# Get issues completed this week
+result = subprocess.run(
+    ['/Users/paolo/.claude/skills/personal-assistant/scripts/linear_fetch.py', 'completed_this_week', '100'],
+    capture_output=True,
+    text=True
+)
+completed_data = json.loads(result.stdout)
+completed_issues = completed_data['issues']
+
+# Get all active issues for in-progress and blocked counts
+result = subprocess.run(
+    ['/Users/paolo/.claude/skills/personal-assistant/scripts/linear_fetch.py', 'active', '100'],
+    capture_output=True,
+    text=True
+)
+active_data = json.loads(result.stdout)
+active_issues = active_data['issues']
+
+# Calculate metrics
+completed_count = len(completed_issues)
+in_progress_count = len([i for i in active_issues if i['state']['type'] == 'started'])
+blocked_count = len([i for i in active_issues if 'blocked' in [label['name'].lower() for label in i['labels']]])
+
+# Break down completed by type
+features = len([i for i in completed_issues if 'feature' in [label['name'].lower() for label in i['labels']]])
+bugs = len([i for i in completed_issues if 'bug' in [label['name'].lower() for label in i['labels']]])
+planning = len([i for i in completed_issues if 'planning' in [label['name'].lower() for label in i['labels']]])
 ```
 
 ### Daily Notes Integration

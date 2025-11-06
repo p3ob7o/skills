@@ -31,11 +31,10 @@ Collect data from all integrated sources:
    - Calendar ID: `paolo@a8c.com` (or `primary`)
 
 2. **Linear**
-   - Query for active issues with filters:
-     - Assigned to user OR mentions user OR user is subscribed
-     - State NOT IN ["Completed", "Canceled"]
-   - Include issue title, priority, labels, due dates
-   - Use MCP Linear tools
+   - Fetch active issues using direct Linear API script
+   - Script location: `/Users/paolo/.claude/skills/personal-assistant/scripts/linear_fetch.py`
+   - Include issue title, priority, labels, due dates, state, team, project
+   - Returns: id, identifier, title, description, priority, state, assignee, labels, project, team
 
 3. **Gmail**
    - Fetch starred emails using direct Gmail API script
@@ -261,13 +260,34 @@ events = data['events']
 
 ### Linear Integration
 ```
-Use MCP Linear tools:
-- Query issues with filters:
-  assignee.id = user.id OR
-  subscribers.id contains user.id OR
-  mentions contains user.id
-- Exclude states: Completed, Canceled
-- Include: title, description, priority, labels, due_date
+Use direct Linear API script (efficient GraphQL queries):
+- Script: /Users/paolo/.claude/skills/personal-assistant/scripts/linear_fetch.py
+- Fetch active issues: ./linear_fetch.py active 50
+
+Example Python integration:
+import subprocess
+import json
+
+result = subprocess.run(
+    ['/Users/paolo/.claude/skills/personal-assistant/scripts/linear_fetch.py', 'active', '50'],
+    capture_output=True,
+    text=True
+)
+data = json.loads(result.stdout)
+issues = data['issues']
+
+# Each issue contains:
+# - id, identifier, title, description
+# - priority, priority_label, url
+# - created_at, updated_at, due_date
+# - state (id, name, type, color)
+# - team (id, key, name)
+# - assignee, creator, project
+# - labels, comments, parent, children
+
+# Categorize by priority and state for briefing
+deep_work = [i for i in issues if i['priority'] <= 2 and i['state']['type'] == 'started']
+shallow_work = [i for i in issues if i['priority'] > 2 or i['state']['type'] != 'started']
 ```
 
 ### Gmail Integration
