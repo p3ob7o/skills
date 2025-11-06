@@ -25,12 +25,55 @@ pip3 install requests
 2. Click "Create new key"
 3. Name it "Personal Assistant" or similar
 4. Copy the API key (starts with `lin_api_...`)
-5. Save it to `~/.claude/linear_api_key.txt`:
+5. Store it securely using one of these methods:
+
+#### Option A: macOS Keychain (Recommended - Most Secure)
+
+Store your API key in the encrypted macOS Keychain:
+
+```bash
+security add-generic-password -s linear-api -a personal-assistant -w "lin_api_YOUR_KEY_HERE"
+```
+
+**Benefits:**
+- Encrypted storage
+- Protected by your macOS login password
+- Can require Touch ID/password for access
+- Standard practice for sensitive credentials
+- Not stored in plain text anywhere
+
+**To verify it was added:**
+```bash
+security find-generic-password -s linear-api -a personal-assistant -w
+```
+
+**To update the key:**
+```bash
+security delete-generic-password -s linear-api -a personal-assistant
+security add-generic-password -s linear-api -a personal-assistant -w "NEW_KEY_HERE"
+```
+
+**To remove:**
+```bash
+security delete-generic-password -s linear-api -a personal-assistant
+```
+
+#### Option B: File with Restricted Permissions (Fallback)
+
+If you prefer a file-based approach:
 
 ```bash
 echo "lin_api_YOUR_KEY_HERE" > ~/.claude/linear_api_key.txt
 chmod 600 ~/.claude/linear_api_key.txt
 ```
+
+**Important:** The script will warn you if file permissions are too open (not 600).
+
+**Security considerations:**
+- ✅ File is readable only by you (chmod 600)
+- ❌ Still stored as plain text on disk
+- ❌ Visible in file system backups
+- ❌ Can be read by any process running as your user
 
 ### 3. Verify Setup
 
@@ -310,12 +353,34 @@ The script supports several built-in modes, but you can also modify it to add cu
 
 ### "api_key_missing" Error
 
-You need to save your Linear API key:
+You need to save your Linear API key using one of these methods:
 
+**Keychain (recommended):**
+```bash
+security add-generic-password -s linear-api -a personal-assistant -w "lin_api_YOUR_KEY_HERE"
+```
+
+**File (fallback):**
 ```bash
 echo "lin_api_YOUR_KEY_HERE" > ~/.claude/linear_api_key.txt
 chmod 600 ~/.claude/linear_api_key.txt
 ```
+
+### "insecure_permissions" Warning
+
+If using the file method, the script detected insecure file permissions:
+
+```bash
+chmod 600 ~/.claude/linear_api_key.txt
+```
+
+### Keychain Access Prompts
+
+First time accessing the Keychain entry, macOS may prompt for your password or Touch ID. You can:
+- **Allow Once**: Prompts every time (most secure)
+- **Always Allow**: No future prompts for this script (convenient)
+
+If you get too many prompts, consider using the file method instead.
 
 ### "api_error" or 401 Unauthorized
 
@@ -341,11 +406,38 @@ If you get 0 issues:
 
 ## Security Notes
 
-- `linear_api_key.txt` contains your API key (keep private)
-- Never commit this file to git
-- The file is in `~/.claude/` which should be in your `.gitignore`
-- The API key has read/write access to your Linear workspace
+### Storage Security
+
+**Keychain (Recommended):**
+- ✅ Encrypted storage using macOS security framework
+- ✅ Protected by your login password/Touch ID
+- ✅ Not accessible to other users
+- ✅ Can be backed up separately via iCloud Keychain
+- ✅ Industry standard for credential storage
+
+**File Method:**
+- ⚠️ Stored as plain text on disk (even with chmod 600)
+- ⚠️ Readable by any process running as your user
+- ⚠️ Included in Time Machine and other backups
+- ⚠️ Visible in file system
+- ✅ Never commit `~/.claude/linear_api_key.txt` to git
+- ✅ Should be in your `.gitignore`
+
+### API Key Permissions
+
+- The API key has full read/write access to your Linear workspace
+- Can create, read, update, and delete issues, comments, and projects
+- Treat it like a password
 - Revoke old keys when generating new ones
+- Consider creating separate keys for different purposes
+
+### Best Practices
+
+1. **Use Keychain when possible** - It's the most secure option on macOS
+2. **Rotate keys periodically** - Generate new keys every 3-6 months
+3. **Revoke compromised keys immediately** - If you accidentally expose a key
+4. **Use descriptive key names in Linear** - "Personal Assistant - MacBook Pro" to track usage
+5. **Monitor API usage** - Check Linear settings for unexpected activity
 
 ## Performance
 

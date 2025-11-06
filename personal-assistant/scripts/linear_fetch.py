@@ -7,27 +7,71 @@ Retrieves issues from Linear using GraphQL API with efficient queries.
 import json
 import os
 import sys
+import subprocess
 from pathlib import Path
 import requests
 
 # Linear API endpoint
 LINEAR_API_URL = 'https://api.linear.app/graphql'
 
-# API key location
+# API key location (fallback)
 API_KEY_FILE = Path.home() / '.claude' / 'linear_api_key.txt'
+
+# Keychain service and account names
+KEYCHAIN_SERVICE = 'linear-api'
+KEYCHAIN_ACCOUNT = 'personal-assistant'
 
 
 def get_api_key():
-    """Read Linear API key from file."""
-    if not API_KEY_FILE.exists():
-        print(json.dumps({
-            'error': 'api_key_missing',
-            'message': f'Please save your Linear API key to {API_KEY_FILE}'
-        }))
-        sys.exit(1)
+    """
+    Read Linear API key from macOS Keychain (preferred) or file (fallback).
 
-    with open(API_KEY_FILE, 'r') as f:
-        return f.read().strip()
+    Priority:
+    1. macOS Keychain (most secure)
+    2. Plain text file with restrictive permissions
+    """
+    # Try Keychain first (macOS only)
+    try:
+        result = subprocess.run(
+            ['security', 'find-generic-password',
+             '-s', KEYCHAIN_SERVICE,
+             '-a', KEYCHAIN_ACCOUNT,
+             '-w'],  # -w outputs password only
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        api_key = result.stdout.strip()
+        if api_key:
+            return api_key
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        # Keychain entry not found or security command not available
+        pass
+
+    # Fallback to file
+    if API_KEY_FILE.exists():
+        # Check file permissions (should be 600)
+        file_stat = os.stat(API_KEY_FILE)
+        file_mode = oct(file_stat.st_mode)[-3:]
+        if file_mode != '600':
+            print(json.dumps({
+                'error': 'insecure_permissions',
+                'message': f'API key file has insecure permissions ({file_mode}). Run: chmod 600 {API_KEY_FILE}'
+            }), file=sys.stderr)
+
+        with open(API_KEY_FILE, 'r') as f:
+            return f.read().strip()
+
+    # No API key found
+    print(json.dumps({
+        'error': 'api_key_missing',
+        'message': f'Linear API key not found. Add to Keychain (recommended) or save to {API_KEY_FILE}\n\n'
+                   f'To add to Keychain:\n'
+                   f'  security add-generic-password -s {KEYCHAIN_SERVICE} -a {KEYCHAIN_ACCOUNT} -w "YOUR_API_KEY"\n\n'
+                   f'Or save to file:\n'
+                   f'  echo "YOUR_API_KEY" > {API_KEY_FILE} && chmod 600 {API_KEY_FILE}'
+    }), file=sys.stderr)
+    sys.exit(1)
 
 
 def query_linear(query, variables=None):
