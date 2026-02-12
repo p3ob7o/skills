@@ -1,6 +1,6 @@
 ---
 name: wrap-up-session
-description: Update APP_DOCUMENTATION.md and CLAUDE.md with changes made during the session before ending.
+description: Update CLAUDE.md and DOCUMENTATION.md with changes made during the session before ending.
 ---
 
 # Wrap Up Session
@@ -13,34 +13,18 @@ Update project documentation before ending a session.
 
 1. Run `git diff` and `git log` to identify changes made this session
 2. Review what was modified (new files, changed files, deleted files)
-3. Read current `APP_DOCUMENTATION.md` and `CLAUDE.md`
-4. Determine what documentation updates are needed:
-   - New components or features added
-   - Changed architecture or file structure
+3. Look for `CLAUDE.md` and `DOCUMENTATION.md` in the repo root
+4. **If they don't exist yet, create them:**
+   - `CLAUDE.md` — project instructions, conventions, key commands, and development guidelines. Structure it based on what you learn from the codebase and session.
+   - `DOCUMENTATION.md` — project overview, architecture, current status, and what's been built. Capture the state of the project as it stands now.
+5. If they already exist, read them and determine what needs updating:
+   - New features, components, or files added
+   - Changed architecture or project structure
    - New patterns or conventions established
-   - Updated test counts or coverage
-   - New environment variables or configuration
-   - Changed commands or scripts
-5. Ask the user to confirm the proposed updates
-6. Apply updates to documentation files
-7. Optionally commit the documentation updates
-
-**Documentation update checklist:**
-
-For `CLAUDE.md`:
-- New development guidelines or patterns
-- Updated project structure
-- New commands or scripts
-- Changed testing approach
-- New environment variables
-
-For `APP_DOCUMENTATION.md`:
-- New features in "Current Status" section
-- Updated component tables
-- New files in project structure
-- Changed test counts
-- Updated "Next Steps" sections
-- Architecture changes
+   - Updated commands, scripts, or configuration
+   - Progress on next steps or pending items
+6. Ask the user to confirm the proposed updates
+7. Apply updates and commit
 
 **Output format:**
 
@@ -55,7 +39,7 @@ For `APP_DOCUMENTATION.md`:
 **CLAUDE.md:**
 - {list of updates, or "No updates needed"}
 
-**APP_DOCUMENTATION.md:**
+**DOCUMENTATION.md:**
 - {list of updates, or "No updates needed"}
 
 Shall I apply these updates?
@@ -63,9 +47,7 @@ Shall I apply these updates?
 
 ## Important Notes
 
-- Always preserve the existing structure and formatting of documentation files
-- Only update sections that are directly affected by changes
+- When creating files from scratch, look at the codebase to populate them meaningfully — don't create empty shells
+- When updating existing files, preserve their structure and only touch sections affected by changes
 - Keep updates concise and factual
-- Update the "Last updated" timestamp in APP_DOCUMENTATION.md
-- When in doubt, ask the user before making changes
 - Commit documentation changes with a descriptive message
